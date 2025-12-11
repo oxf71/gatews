@@ -163,6 +163,8 @@ type OrderMsg struct {
 	FillPrice string `json:"fill_price,omitempty"`
 	// Total filled in quote currency
 	FilledTotal string `json:"filled_total,omitempty"`
+	// Filled amount
+	FilledAmount string `json:"filled_amount,omitempty"`
 	// Average fill price
 	AvgDealPrice string `json:"avg_deal_price,omitempty"`
 	// Fee deducted
