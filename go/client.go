@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -46,6 +48,7 @@ type ConnConf struct {
 	SkipTlsVerify    bool
 	ShowReconnectMsg bool
 	PingInterval     string
+	ProxyURL         string
 }
 
 type ConfOptions struct {
@@ -57,6 +60,7 @@ type ConfOptions struct {
 	SkipTlsVerify    bool
 	ShowReconnectMsg bool
 	PingInterval     string
+	ProxyURL         string
 }
 
 func NewWsService(ctx context.Context, logger *log.Logger, conf *ConnConf) (*WsService, error) {
@@ -81,6 +85,13 @@ func NewWsService(ctx context.Context, logger *log.Logger, conf *ConnConf) (*WsS
 		dialer := websocket.DefaultDialer
 		if conf.SkipTlsVerify {
 			dialer.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		}
+		if conf.ProxyURL != "" {
+			url, err := url.Parse(conf.ProxyURL)
+			if err != nil {
+				return nil, err
+			}
+			dialer.Proxy = http.ProxyURL(url)
 		}
 		c, _, err := dialer.Dial(conf.URL, nil)
 		if err != nil {
@@ -173,6 +184,7 @@ func NewConnConfFromOption(op *ConfOptions) *ConnConf {
 		SkipTlsVerify:    op.SkipTlsVerify,
 		ShowReconnectMsg: op.ShowReconnectMsg,
 		PingInterval:     op.PingInterval,
+		ProxyURL:         op.ProxyURL,
 	}
 }
 
