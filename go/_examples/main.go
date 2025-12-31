@@ -15,10 +15,11 @@ func main() {
 	// create WsService with ConnConf, this is recommended, key and secret will be needed by some channels
 	// ctx and logger could be nil, they'll be initialized by default
 	ws, err := gate.NewWsService(nil, nil, gate.NewConnConfFromOption(&gate.ConfOptions{
-		Key:           "YOUR_API_KEY",
-		Secret:        "YOUR_API_SECRET",
-		MaxRetryConn:  10, // default value is math.MaxInt64, set it when needs
-		SkipTlsVerify: false,
+		Key:          "YOUR_API_KEY",
+		Secret:       "YOUR_API_SECRET",
+		MaxRetryConn: 10, // default value is math.MaxInt64, set it when needs
+		// SkipTlsVerify: false,
+		ProxyURL: "",
 	}))
 	// we can also do nothing to get a WsService, all parameters will be initialized by default and default url is spot
 	// but some channels need key and secret for auth, we can also use set function to set key and secret
@@ -42,6 +43,7 @@ func main() {
 	// create callback functions for receive messages
 	callOrder := gate.NewCallBack(func(msg *gate.UpdateMsg) {
 		if msg.Event != "update" {
+			log.Printf("order event msg: %s", msg)
 			return
 		}
 		// parse the message to struct we need
@@ -52,26 +54,26 @@ func main() {
 		log.Printf("order: %+v", order)
 	})
 
-	callTrade := gate.NewCallBack(func(msg *gate.UpdateMsg) {
-		var trade gate.SpotTradeMsg
-		if err := json.Unmarshal(msg.Result, &trade); err != nil {
-			log.Printf("trade %s unmarshal err: %v", msg.Result, err)
-		}
-		log.Printf("trade: %+v", trade)
-	})
+	// callTrade := gate.NewCallBack(func(msg *gate.UpdateMsg) {
+	// 	var trade gate.SpotTradeMsg
+	// 	if err := json.Unmarshal(msg.Result, &trade); err != nil {
+	// 		log.Printf("trade %s unmarshal err: %v", msg.Result, err)
+	// 	}
+	// 	log.Printf("trade: %+v", trade)
+	// })
 
 	// first, we need set callback function
 	ws.SetCallBack(gate.ChannelSpotOrder, callOrder)
-	ws.SetCallBack(gate.ChannelSpotPublicTrade, callTrade)
+	// ws.SetCallBack(gate.ChannelSpotPublicTrade, callTrade)
 	// second, after set callback function, subscribe to any channel you are interested into
 	if err := ws.Subscribe(gate.ChannelSpotOrder, []string{"BTC_USDT"}); err != nil {
 		log.Printf("Subscribe err:%s", err.Error())
 		return
 	}
-	if err := ws.Subscribe(gate.ChannelSpotPublicTrade, []string{"BTC_USDT"}); err != nil {
-		log.Printf("Subscribe err:%s", err.Error())
-		return
-	}
+	// if err := ws.Subscribe(gate.ChannelSpotPublicTrade, []string{"BTC_USDT"}); err != nil {
+	// 	log.Printf("Subscribe err:%s", err.Error())
+	// 	return
+	// }
 
 	// example for maintaining local order book
 	// LocalOrderBook(context.Background(), ws, []string{"BTC_USDT"})
